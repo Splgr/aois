@@ -10,7 +10,6 @@ from operations.MultiplyOperation import MultiplyOperation
 from operations.DivideOperation import DivideOperation
 from operations.OutputFormatter import OutputFormatter
 from utils.RangeValidator import RangeValidator
-from core.exceptions import OverflowError
 
 def print_separator(title):
     print("\n" + "=" * 60)
@@ -49,7 +48,9 @@ def main():
     print("ЛАБОРАТОРНАЯ РАБОТА 1")
     print("Представление чисел в памяти компьютера")
     
+    # =========================================================================
     # ПУНКТ 1: Все коды
+    # =========================================================================
     print_separator("ПУНКТ 1: Прямой, Обратный, Дополнительный код")
     
     a = get_int_input("Введите число A (целое): ", RangeValidator.validate_signed_int32)
@@ -69,7 +70,9 @@ def main():
     print(f"Обратный код:   {reverse.to_binary(b)}")
     print(f"Дополнительный: {additional.to_binary(b)}")
     
-    # ПУНКТ 2-3: Сложение/Вычитание
+    # =========================================================================
+    # ПУНКТ 2-3: Сложение/Вычитание (Дополнительный код)
+    # =========================================================================
     print_separator("ПУНКТ 2-3: Сложение/Вычитание (Доп. код)")
     
     try:
@@ -91,7 +94,9 @@ def main():
     except Exception as e:
         print(f"Ошибка: {e}")
     
-    # ПУНКТ 4-5: Умножение/Деление
+    # =========================================================================
+    # ПУНКТ 4-5: Умножение/Деление (Прямой код)
+    # =========================================================================
     print_separator("ПУНКТ 4-5: Умножение/Деление (Прямой код)")
     
     try:
@@ -104,16 +109,21 @@ def main():
         
         print(OutputFormatter.format_result("Умножение (A * B)", a, b, result_mul, result_mul_dec, "Direct"))
         
-        div_op = DivideOperation(32, 5)
+        # ✅ ВАЖНО: 16 бит на дробную часть (согласовано с OutputFormatter)
+        div_op = DivideOperation(32, frac_bits=16)
         result_div = div_op.execute(bits_a_dir, bits_b_dir)
-        result_div_dec = 0  # ❌ Не используем from_binary для деления!
+        result_div_dec = 0  # Декодирование происходит в OutputFormatter
         
         print(OutputFormatter.format_result("Деление (A / B)", a, b, result_div, result_div_dec, "Direct"))
         
+    except ZeroDivisionError as e:
+        print(f"❌ Ошибка: {e}")
     except Exception as e:
         print(f"Ошибка: {e}")
     
-    # ПУНКТ 6: IEEE-754 (все операции)
+    # =========================================================================
+    # ПУНКТ 6: IEEE-754 (вещественные числа)
+    # =========================================================================
     print_separator("ПУНКТ 6: IEEE-754 (вещественные числа)")
     
     try:
@@ -147,27 +157,39 @@ def main():
         result_div_dec = ieee.from_binary(result_div_bits)
         print(OutputFormatter.format_result("Деление (A / B)", a_float, b_float, result_div_bits, result_div_dec, "IEEE754"))
         
+    except ZeroDivisionError as e:
+        print(f"❌ Ошибка: {e}")
     except Exception as e:
         print(f"Ошибка: {e}")
     
-    # ПУНКТ 7: BCD
+    # =========================================================================
+    # ПУНКТ 7: BCD 8421 (только положительные числа)
+    # =========================================================================
     print_separator("ПУНКТ 7: BCD 8421")
+    print("⚠️  BCD поддерживает только положительные числа!\n")
     
-    a_bcd = get_int_input("\nВведите число A (BCD, макс 8 цифр): ", RangeValidator.validate_bcd32)
-    b_bcd = get_int_input("Введите число B (BCD, макс 8 цифр): ", RangeValidator.validate_bcd32)
+    try:
+        a_bcd = get_int_input("Введите число A (BCD, макс 8 цифр, ≥0): ", RangeValidator.validate_bcd32)
+        b_bcd = get_int_input("Введите число B (BCD, макс 8 цифр, ≥0): ", RangeValidator.validate_bcd32)
+        
+        bcd = BCD8421Code()
+        bits_a_bcd = bcd.to_binary(a_bcd)
+        bits_b_bcd = bcd.to_binary(b_bcd)
+        
+        print(f"\nA в BCD: {bits_a_bcd}")
+        print(f"B в BCD: {bits_b_bcd}")
+        
+        result_bcd = bcd.add_with_correction(bits_a_bcd, bits_b_bcd)
+        result_bcd_dec = bcd.from_binary(result_bcd)
+        
+        print(OutputFormatter.format_result("Сложение BCD", a_bcd, b_bcd, result_bcd, result_bcd_dec, "BCD8421"))
+        
+    except Exception as e:
+        print(f"Ошибка: {e}")
     
-    bcd = BCD8421Code()
-    bits_a_bcd = bcd.to_binary(a_bcd)
-    bits_b_bcd = bcd.to_binary(b_bcd)
-    
-    print(f"\nA в BCD: {bits_a_bcd}")
-    print(f"B в BCD: {bits_b_bcd}")
-    
-    result_bcd = bcd.add_with_correction(bits_a_bcd, bits_b_bcd)
-    result_bcd_dec = bcd.from_binary(result_bcd)
-    
-    print(OutputFormatter.format_result("Сложение BCD", a_bcd, b_bcd, result_bcd, result_bcd_dec, "BCD8421"))
-    
+    # =========================================================================
+    # Завершение
+    # =========================================================================
     print("\n" + "=" * 60)
     print("  Лабораторная работа завершена!")
     print("=" * 60)
